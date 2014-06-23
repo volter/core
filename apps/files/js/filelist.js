@@ -10,13 +10,26 @@
 
 (function() {
 	/**
+	 * @class OCA.Files.FileList
+	 * @classdesc
+	 *
 	 * The FileList class manages a file list view.
 	 * A file list view consists of a controls bar and
 	 * a file list table.
+	 *
+	 * @param $el container element with existing markup for the #controls
+	 * and a table
+	 * @param [options] map of options, see other parameters
+	 * @param [options.scrollContainer] scrollable container, defaults to $(window)
+	 * @param [options.dragOptions] drag options, disabled by default
+	 * @param [options.folderDropOptions] folder drop options, disabled by default
 	 */
 	var FileList = function($el, options) {
 		this.initialize($el, options);
 	};
+	/**
+	 * @memberof OCA.Files
+	 */
 	FileList.prototype = {
 		SORT_INDICATOR_ASC_CLASS: 'icon-triangle-n',
 		SORT_INDICATOR_DESC_CLASS: 'icon-triangle-s',
@@ -41,56 +54,75 @@
 		 */
 		$fileList: null,
 
+		/**
+		 * @type OCA.Files.BreadCrumb
+		 */
 		breadcrumb: null,
 
 		/**
-		 * Instance of FileSummary
+		 * @type OCA.Files.FileSummary
 		 */
 		fileSummary: null,
+
+		/**
+		 * Whether the file list was initialized already.
+		 * @type boolean
+		 */
 		initialized: false,
 
-		// number of files per page
+		/**
+		 * Number of files per page
+		 * @type int
+		 */
 		pageSize: 20,
 
 		/**
 		 * Array of files in the current folder.
 		 * The entries are of file data.
+		 *
+		 * @type Array.<Object>
 		 */
 		files: [],
 
 		/**
 		 * File actions handler, defaults to OCA.Files.FileActions
+		 * @type OCA.Files.FileActions
 		 */
 		fileActions: null,
 
 		/**
 		 * Map of file id to file data
+		 * @type Object.<int, Object>
 		 */
 		_selectedFiles: {},
 
 		/**
 		 * Summary of selected files.
-		 * Instance of FileSummary.
+		 * @type OCA.Files.FileSummary
 		 */
 		_selectionSummary: null,
 
 		/**
 		 * Sort attribute
+		 * @type String
 		 */
 		_sort: 'name',
 
 		/**
 		 * Sort direction: 'asc' or 'desc'
+		 * @type String
 		 */
 		_sortDirection: 'asc',
 
 		/**
 		 * Sort comparator function for the current sort
+		 * @type Function
 		 */
 		_sortComparator: null,
 
 		/**
 		 * Current directory
+		 * @type String
 		 */
 		_currentDirectory: null,
 
@@ -99,13 +131,7 @@
 
 		/**
 		 * Initialize the file list and its components
-		 *
-		 * @param $el container element with existing markup for the #controls
-		 * and a table
-		 * @param options map of options, see other parameters
-		 * @param scrollContainer scrollable container, defaults to $(window)
-		 * @param dragOptions drag options, disabled by default
-		 * @param folderDropOptions folder drop options, disabled by default
+		 * @private
 		 */
 		initialize: function($el, options) {
 			var self = this;
@@ -176,6 +202,11 @@
 			this.fileActions.off('setDefault', this._onFileActionsUpdated);
 		},
 
+		/**
+		 * Initializes the file actions, set up listeners.
+		 *
+		 * @param {OCA.Files.FileActions} fileActions file actions
+		 */
 		_initFileActions: function(fileActions) {
 			this.fileActions = fileActions;
 			if (!this.fileActions) {
@@ -574,8 +605,8 @@
 		},
 		/**
 		 * Creates a new table row element using the given file data.
-		 * @param fileData map of file attributes
-		 * @param options map of attribute "loading" whether the entry is currently loading
+		 * @param {OCA.Files.FileInfo} fileData file info attributes
+		 * @param options map of attributes
 		 * @return new tr element (not appended to the table)
 		 */
 		_createRow: function(fileData, options) {
@@ -708,11 +739,14 @@
 		 * Adds an entry to the files array and also into the DOM
 		 * in a sorted manner.
 		 *
-		 * @param fileData map of file attributes
-		 * @param options map of attributes:
-		 * - "updateSummary": true to update the summary after adding (default), false otherwise
-		 * - "silent": true to prevent firing events like "fileActionsReady"
-		 * - "animate": true to animate preview loading (defaults to true here)
+		 * @param {OCA.Files.FileInfo} fileData map of file attributes
+		 * @param {Object} [options] map of attributes
+		 * @param {boolean} [options.updateSummary] true to update the summary
+		 * after adding (default), false otherwise. Defaults to true.
+		 * @param {boolean} [options.silent] true to prevent firing events like "fileActionsReady",
+		 * defaults to false.
+		 * @param {boolean} [options.animate] true to animate the thumbnail image after load
+		 * defaults to true.
 		 * @return new tr element (not appended to the table)
 		 */
 		add: function(fileData, options) {
@@ -774,11 +808,13 @@
 		 * Creates a new row element based on the given attributes
 		 * and returns it.
 		 *
-		 * @param fileData map of file attributes
-		 * @param options map of attributes:
-		 * - "index" optional index at which to insert the element
-		 * - "updateSummary" true to update the summary after adding (default), false otherwise
-		 * - "animate" true to animate the preview rendering
+		 * @param {OCA.Files.FileInfo} fileData map of file attributes
+		 * @param {Object} [options] map of attributes
+		 * @param {int} [options.index] index at which to insert the element
+		 * @param {boolean} [options.updateSummary] true to update the summary
+		 * after adding (default), false otherwise. Defaults to true.
+		 * @param {boolean} [options.animate] true to animate the thumbnail image after load
+		 * defaults to true.
 		 * @return new tr element (not appended to the table)
 		 */
 		_renderRow: function(fileData, options) {
@@ -845,6 +881,7 @@
 		},
 		/**
 		 * Returns the current directory
+		 * @method getCurrentDirectory
 		 * @return current directory
 		 */
 		getCurrentDirectory: function(){
@@ -1016,7 +1053,10 @@
 
 		/**
 		 * Generates a preview URL based on the URL space.
-		 * @param urlSpec map with {x: width, y: height, file: file path}
+		 * @param urlSpec attributes for the URL
+		 * @param {int} urlSpec.x width
+		 * @param {int} urlSpec.y height
+		 * @param {String} urlSpec.file path to the file
 		 * @return preview URL
 		 */
 		generatePreviewUrl: function(urlSpec) {
@@ -1123,8 +1163,9 @@
 		/**
 		 * Removes a file entry from the list
 		 * @param name name of the file to remove
-		 * @param options optional options as map:
-		 * "updateSummary": true to update the summary (default), false otherwise
+		 * @param {Object} [options] map of attributes
+		 * @param {boolean} [options.updateSummary] true to update the summary
+		 * after removing, false otherwise. Defaults to true.
 		 * @return deleted element
 		 */
 		remove: function(name, options){
@@ -1166,6 +1207,8 @@
 		 * Finds the index of the row before which the given
 		 * fileData should be inserted, considering the current
 		 * sorting
+		 *
+		 * @param {OCA.Files.FileInfo} fileData file info
 		 */
 		_findInsertionIndex: function(fileData) {
 			var index = 0;
@@ -1476,7 +1519,7 @@
 		/**
 		 * Shows the loading mask.
 		 *
-		 * @see #hideMask
+		 * @see OCA.Files.FileList#hideMask
 		 */
 		showMask: function() {
 			// in case one was shown before
@@ -1497,7 +1540,7 @@
 		},
 		/**
 		 * Hide the loading mask.
-		 * @see #showMask
+		 * @see OCA.Files.FileList#showMask
 		 */
 		hideMask: function() {
 			this.$el.find('.mask').remove();
@@ -1842,15 +1885,17 @@
 
 	/**
 	 * Sort comparators.
+	 * @namespace OCA.Files.FileList.Comparators
+	 * @private
 	 */
 	FileList.Comparators = {
 		/**
 		 * Compares two file infos by name, making directories appear
 		 * first.
 		 *
-		 * @param fileInfo1 file info
-		 * @param fileInfo2 file info
-		 * @return -1 if the first file must appear before the second one,
+		 * @param {OCA.Files.FileInfo} fileInfo1 file info
+		 * @param {OCA.Files.FileInfo} fileInfo2 file info
+		 * @return {int} -1 if the first file must appear before the second one,
 		 * 0 if they are identify, 1 otherwise.
 		 */
 		name: function(fileInfo1, fileInfo2) {
@@ -1865,9 +1910,9 @@
 		/**
 		 * Compares two file infos by size.
 		 *
-		 * @param fileInfo1 file info
-		 * @param fileInfo2 file info
-		 * @return -1 if the first file must appear before the second one,
+		 * @param {OCA.Files.FileInfo} fileInfo1 file info
+		 * @param {OCA.Files.FileInfo} fileInfo2 file info
+		 * @return {int} -1 if the first file must appear before the second one,
 		 * 0 if they are identify, 1 otherwise.
 		 */
 		size: function(fileInfo1, fileInfo2) {
@@ -1876,15 +1921,36 @@
 		/**
 		 * Compares two file infos by timestamp.
 		 *
-		 * @param fileInfo1 file info
-		 * @param fileInfo2 file info
-		 * @return -1 if the first file must appear before the second one,
+		 * @param {OCA.Files.FileInfo} fileInfo1 file info
+		 * @param {OCA.Files.FileInfo} fileInfo2 file info
+		 * @return {int} -1 if the first file must appear before the second one,
 		 * 0 if they are identify, 1 otherwise.
 		 */
 		mtime: function(fileInfo1, fileInfo2) {
 			return fileInfo1.mtime - fileInfo2.mtime;
 		}
 	};
+
+	/**
+	 * File info attributes.
+	 *
+	 * @todo make this a real class in the future
+	 * @typedef {Object} OCA.Files.FileInfo
+	 *
+	 * @property {int} id file id
+	 * @property {String} name file name
+	 * @property {String} [path] file path, defaults to the list's current path
+	 * @property {String} mimetype mime type
+	 * @property {String} type "file" for files or "dir" for directories
+	 * @property {int} permissions file permissions
+	 * @property {int} mtime modification time in milliseconds
+	 * @property {boolean} [isShareMountPoint] whether the file is a share mount
+	 * point
+	 * @property {boolean} [isPreviewAvailable] whether a preview is available
+	 * for the given file type
+	 * @property {String} [icon] path to the mime type icon
+	 * @property {String} etag etag of the file
+	 */
 
 	OCA.Files.FileList = FileList;
 })();
