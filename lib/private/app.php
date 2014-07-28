@@ -231,16 +231,18 @@ class OC_App {
 
 	/**
 	 * checks whether or not an app is enabled
+	 *
 	 * @param string $app app
+	 * @param bool $all whether to check if the logged in user has access to the app or just check if the app is installed
 	 * @return bool
 	 *
 	 * This function checks whether or not an app is enabled.
 	 */
-	public static function isEnabled($app) {
+	public static function isEnabled($app, $all = false) {
 		if ('files' == $app) {
 			return true;
 		}
-		$enabledApps = self::getEnabledApps();
+		$enabledApps = self::getEnabledApps(false, $all);
 		return in_array($app, $enabledApps);
 	}
 

@@ -124,11 +124,13 @@ class App {
 
 	/**
 	 * Check if the app is enabled, redirects to home if not
+	 *
 	 * @param string $app
+	 * @param bool $all
 	 * @return void
 	*/
-	public static function checkAppEnabled( $app ) {
-		\OC_Util::checkAppEnabled( $app );
+	public static function checkAppEnabled( $app, $all = false ) {
+		\OC_Util::checkAppEnabled( $app, $all );
 	}
 
 	/**

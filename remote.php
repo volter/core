@@ -43,7 +43,7 @@ try {
 			$file =  OC::$SERVERROOT .'/'. $file;
 			break;
 		default:
-			OC_Util::checkAppEnabled($app);
+			OC_Util::checkAppEnabled($app, true);
 			OC_App::loadApp($app);
 			$file = OC_App::getAppPath($app) .'/'. $parts[1];
 			break;
