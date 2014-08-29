@@ -16,6 +16,7 @@ $application->registerRoutes($this, array('routes' => array(
 	array('name' => 'settings#enableApp', 'url' => '/settings/app/enable', 'verb' => 'POST'),
 	array('name' => 'settings#disableApp', 'url' => '/settings/app/disable', 'verb' => 'POST'),
 	array('name' => 'settings#setLanguage', 'url' => '/settings/language', 'verb' => 'POST'),
+	array('name' => 'settings#setSecurity', 'url' => '/settings/security', 'verb' => 'POST'),
 )
 ));
 
@@ -92,7 +93,5 @@ $this->create('settings_mail_settings', '/settings/admin/mailsettings')
 $this->create('settings_admin_mail_test', '/settings/admin/mailtest')
 	->post()
 	->action('OC\Settings\Admin\Controller', 'sendTestMail');
-$this->create('settings_ajax_setsecurity', '/settings/ajax/setsecurity.php')
-	->actionInclude('settings/ajax/setsecurity.php');
 $this->create('settings_ajax_excludegroups', '/settings/ajax/excludegroups.php')
 	->actionInclude('settings/ajax/excludegroups.php');

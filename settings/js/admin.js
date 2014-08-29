@@ -47,7 +47,7 @@ $(document).ready(function(){
 				if(answer) {
 					$.ajax({
 						type: 'POST',
-						url: OC.generateUrl('settings/ajax/setsecurity.php'),
+						url: OC.generateUrl('settings/security'),
 						data: { trustedDomain: params.trustDomain }
 					}).done(function() {
 						window.location.replace(OC.generateUrl('settings/admin'));
@@ -104,7 +104,7 @@ $(document).ready(function(){
 	});
 
 	$('#security').change(function(){
-		$.post(OC.filePath('settings','ajax','setsecurity.php'), { enforceHTTPS: $('#forcessl').val() },function(){} );
+		$.post(OC.generateUrl('settings/security'), { enforceHTTPS: $('#forcessl').val() },function(){} );
 	});
 
 	$('#mail_smtpauth').change(function() {

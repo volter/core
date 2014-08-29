@@ -173,4 +173,25 @@ class SettingsController extends Controller {
 		return new JSONResponse('', HTTP::STATUS_INTERNAL_SERVER_ERROR);
 	}
 
+	/**
+	 * Security related settings
+	 *
+	 * @param boolean $enforceHTTPS
+	 * @param string $trustedDomain
+	 *
+	 * @return JSONResponse
+	 */
+	public function setSecurity($enforceHTTPS, $trustedDomain) {
+		if($enforceHTTPS !== null) {
+			$this->config->setSystemValue('forcessl', $enforceHTTPS);
+		}
+
+		if($trustedDomain !== null) {
+			$trustedDomains = $this->config->getSystemValue('trusted_domains');
+			$trustedDomains[] = $_POST['trustedDomain'];
+			$this->config->setSystemValue('trusted_domains', $trustedDomains);
+		}
+
+		return new JSONResponse();
+	}
 }
