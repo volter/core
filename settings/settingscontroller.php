@@ -188,7 +188,7 @@ class SettingsController extends Controller {
 
 		if($trustedDomain !== null) {
 			$trustedDomains = $this->config->getSystemValue('trusted_domains');
-			$trustedDomains[] = $_POST['trustedDomain'];
+			$trustedDomains[] = $trustedDomain;
 			$this->config->setSystemValue('trusted_domains', $trustedDomains);
 		}
 
