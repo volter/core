@@ -30,6 +30,7 @@ class Application extends App {
 				$c->query('ServerContainer')->getUserManager(),
 				$c->query('ServerContainer')->getGroupManager(),
 				$c->query('ServerContainer')->getSubAdminManager(),
+				$c->query('ServerContainer')->getLogger(),
 				\OC_L10N::get('settings')
 			);
 		});

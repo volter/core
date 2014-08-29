@@ -146,7 +146,7 @@ OC.Settings.Apps = OC.Settings.Apps || {
 		var appitem=$('#app-navigation ul li[data-id="'+appid+'"]');
 		element.val(t('settings','Please wait....'));
 		if(active && !groups.length) {
-			$.post(OC.filePath('settings','ajax','disableapp.php'),{appid:appid},function(result) {
+			$.post(OC.generateUrl('settings/app/disable'),{app:appid},function(result) {
 				if(!result || result.status !== 'success') {
 					if (result.data && result.data.message) {
 						OC.Settings.Apps.showErrorMessage(result.data.message);
@@ -172,7 +172,7 @@ OC.Settings.Apps = OC.Settings.Apps || {
 				}
 			},'json');
 		} else {
-			$.post(OC.filePath('settings','ajax','enableapp.php'),{appid: appid, groups: groups},function(result) {
+			$.post(OC.generateUrl('settings/app/enable'),{app: appid, groups: groups},function(result) {
 				if(!result || result.status !== 'success') {
 					if (result.data && result.data.message) {
 						OC.Settings.Apps.showErrorMessage(result.data.message);

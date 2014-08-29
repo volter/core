@@ -13,6 +13,8 @@ use OC\Settings\Application;
 $application = new Application();
 $application->registerRoutes($this, array('routes' => array(
 	array('name' => 'settings#changeDisplayName', 'url' => '/settings/displayName', 'verb' => 'POST'),
+	array('name' => 'settings#enableApp', 'url' => '/settings/app/enable', 'verb' => 'POST'),
+	array('name' => 'settings#disableApp', 'url' => '/settings/app/disable', 'verb' => 'POST'),
 )
 ));
 
@@ -72,10 +74,6 @@ $this->create('settings_ajax_deletekeys', '/settings/ajax/deletekeys.php')
 // apps
 $this->create('settings_ajax_apps_ocs', '/settings/ajax/apps/ocs.php')
 	->actionInclude('settings/ajax/apps/ocs.php');
-$this->create('settings_ajax_enableapp', '/settings/ajax/enableapp.php')
-	->actionInclude('settings/ajax/enableapp.php');
-$this->create('settings_ajax_disableapp', '/settings/ajax/disableapp.php')
-	->actionInclude('settings/ajax/disableapp.php');
 $this->create('settings_ajax_updateapp', '/settings/ajax/updateapp.php')
 	->actionInclude('settings/ajax/updateapp.php');
 $this->create('settings_ajax_uninstallapp', '/settings/ajax/uninstallapp.php')

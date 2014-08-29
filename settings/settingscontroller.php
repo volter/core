@@ -17,6 +17,7 @@ use \OC\User\Manager as UserManager;
 use \OC\Group\Manager as GroupManager;
 use \OCP\ISubAdmin;
 use \OCP\AppFramework\Http;
+use \OCP\ILogger;
 
 class SettingsController extends Controller {
 
@@ -41,6 +42,11 @@ class SettingsController extends Controller {
 	protected $subAdminManager;
 
 	/**
+	 * @var \OCP\ILogger;
+	 */
+	protected $logger;
+
+	/**
 	 * @var \OC_L10N
 	 */
 	protected $l;
@@ -51,6 +57,7 @@ class SettingsController extends Controller {
 								UserManager $userManager,
 								GroupManager $groupManager,
 								ISubAdmin $subAdminManager,
+								ILogger $logger,
 								\OC_L10N $l
 	) {
 		parent::__construct($appName, $request);
@@ -58,6 +65,7 @@ class SettingsController extends Controller {
 		$this->userManager = $userManager;
 		$this->groupManager = $groupManager;
 		$this->subAdminManager = $subAdminManager;
+		$this->logger = $logger;
 		$this->l = $l;
 	}
 
@@ -94,4 +102,43 @@ class SettingsController extends Controller {
 
 		return new JSONResponse('', Http::STATUS_FORBIDDEN);
 	}
+
+	/**
+	 * Enables an application
+	 *
+	 * @param string $app
+	 * @param string $groups
+	 *
+	 * @return JSONResponse
+	 */
+	public function enableApp($app, $groups = '') {
+		try {
+			\OC_App::enable($app, $groups);
+			return new JSONResponse(
+				array(
+					'status' => 'success'
+				)
+			);
+		} catch (\Exception $e) {
+			$this->logger->error($e->getMessage(), array('app' => 'core'));
+			return new JSONResponse($e->getMessage(), HTTP::STATUS_INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	/**
+	 * Disables an application
+	 *
+	 * @param string $app
+	 *
+	 * @return JSONResponse
+	 */
+	public function disableApp($app) {
+		\OC_App::disable($app);
+		return new JSONResponse(
+			array(
+				'status' => 'success'
+			)
+		);
+	}
+
 }
