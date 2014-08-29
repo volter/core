@@ -31,7 +31,8 @@ class Application extends App {
 				$c->query('ServerContainer')->getGroupManager(),
 				$c->query('ServerContainer')->getSubAdminManager(),
 				$c->query('ServerContainer')->getLogger(),
-				\OC_L10N::get('settings')
+				$c->query('ServerContainer')->getConfig(),
+				$c->query('ServerContainer')->getL10N('settings')
 			);
 		});
 	}

@@ -18,6 +18,8 @@ use \OC\Group\Manager as GroupManager;
 use \OCP\ISubAdmin;
 use \OCP\AppFramework\Http;
 use \OCP\ILogger;
+use \OCP\IConfig;
+use \OCP\IL10N;
 
 class SettingsController extends Controller {
 
@@ -47,7 +49,12 @@ class SettingsController extends Controller {
 	protected $logger;
 
 	/**
-	 * @var \OC_L10N
+	 * @var \OCP\IConfig
+	 */
+	protected $config;
+
+	/**
+	 * @var \OCP\IL10N
 	 */
 	protected $l;
 
@@ -58,7 +65,8 @@ class SettingsController extends Controller {
 								GroupManager $groupManager,
 								ISubAdmin $subAdminManager,
 								ILogger $logger,
-								\OC_L10N $l
+								IConfig $config,
+								IL10N $l
 	) {
 		parent::__construct($appName, $request);
 		$this->userSession = $userSession;
@@ -66,6 +74,7 @@ class SettingsController extends Controller {
 		$this->groupManager = $groupManager;
 		$this->subAdminManager = $subAdminManager;
 		$this->logger = $logger;
+		$this->config = $config;
 		$this->l = $l;
 	}
 
@@ -139,6 +148,29 @@ class SettingsController extends Controller {
 				'status' => 'success'
 			)
 		);
+	}
+
+	/**
+	 * Sets the language
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @param string $lang
+	 *
+	 * @return JSONResponse
+	 */
+	public function setLanguage($lang) {
+		$languageCodes = \OC_L10N::findAvailableLanguages();
+		if(array_search($lang, $languageCodes) || $lang === 'en') {
+			$this->config->setUserValue($this->userSession->getUser()->getUID(), 'core', 'lang', $lang);
+			return new JSONResponse(
+				array(
+					'status' => 'success'
+				)
+			);
+		}
+
+		return new JSONResponse('', HTTP::STATUS_INTERNAL_SERVER_ERROR);
 	}
 
 }

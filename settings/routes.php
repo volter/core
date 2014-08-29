@@ -15,6 +15,7 @@ $application->registerRoutes($this, array('routes' => array(
 	array('name' => 'settings#changeDisplayName', 'url' => '/settings/displayName', 'verb' => 'POST'),
 	array('name' => 'settings#enableApp', 'url' => '/settings/app/enable', 'verb' => 'POST'),
 	array('name' => 'settings#disableApp', 'url' => '/settings/app/disable', 'verb' => 'POST'),
+	array('name' => 'settings#setLanguage', 'url' => '/settings/language', 'verb' => 'POST'),
 )
 ));
 
@@ -63,8 +64,6 @@ $this->create('settings_personal_changepassword', '/settings/personal/changepass
 	->action('OC\Settings\ChangePassword\Controller', 'changePersonalPassword');
 $this->create('settings_ajax_lostpassword', '/settings/ajax/lostpassword.php')
 	->actionInclude('settings/ajax/lostpassword.php');
-$this->create('settings_ajax_setlanguage', '/settings/ajax/setlanguage.php')
-	->actionInclude('settings/ajax/setlanguage.php');
 $this->create('settings_ajax_decryptall', '/settings/ajax/decryptall.php')
 	->actionInclude('settings/ajax/decryptall.php');
 $this->create('settings_ajax_restorekeys', '/settings/ajax/restorekeys.php')
