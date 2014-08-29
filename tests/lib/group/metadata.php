@@ -9,9 +9,17 @@
 
 namespace Test\Group;
 
+use OC\User\User;
+
 class Test_MetaData extends \PHPUnit_Framework_TestCase {
 	private function getGroupManagerMock() {
 		return $this->getMockBuilder('\OC\Group\Manager')
+			->disableOriginalConstructor()
+			->getMock();
+	}
+
+	private function getSubAdminMock() {
+		return $this->getMockBuilder('\OC\SubAdmin')
 			->disableOriginalConstructor()
 			->getMock();
 	}
@@ -39,7 +47,9 @@ class Test_MetaData extends \PHPUnit_Framework_TestCase {
 
 	public function testGet() {
 		$groupManager = $this->getGroupManagerMock();
-		$groupMetaData = new \OC\Group\MetaData('foo', true, $groupManager);
+		$subAdmin = $this->getSubAdminMock();
+		$user = new User('foo', null);
+		$groupMetaData = new \OC\Group\MetaData($user, true, $groupManager, $subAdmin);
 		$group = $this->getGroupMock();
 		$groups = array_fill(0, 3, $group);
 
@@ -59,7 +69,9 @@ class Test_MetaData extends \PHPUnit_Framework_TestCase {
 
 	public function testGetWithSorting() {
 		$groupManager = $this->getGroupManagerMock();
-		$groupMetaData = new \OC\Group\MetaData('foo', true, $groupManager);
+		$subAdmin = $this->getSubAdminMock();
+		$user = new User('foo', null);
+		$groupMetaData = new \OC\Group\MetaData($user, true, $groupManager, $subAdmin);
 		$groupMetaData->setSorting($groupMetaData::SORT_USERCOUNT);
 		$group = $this->getGroupMock();
 		$groups = array_fill(0, 3, $group);
@@ -80,7 +92,9 @@ class Test_MetaData extends \PHPUnit_Framework_TestCase {
 
 	public function testGetWithCache() {
 		$groupManager = $this->getGroupManagerMock();
-		$groupMetaData = new \OC\Group\MetaData('foo', true, $groupManager);
+		$subAdmin = $this->getSubAdminMock();
+		$user = new User('foo', null);
+		$groupMetaData = new \OC\Group\MetaData($user, true, $groupManager, $subAdmin);
 		$group = $this->getGroupMock();
 		$groups = array_fill(0, 3, $group);
 

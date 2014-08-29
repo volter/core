@@ -82,7 +82,8 @@ class OC_JSON{
 	* Check if the user is a subadmin, send json error msg if not
 	*/
 	public static function checkSubAdminUser() {
-		if(!OC_SubAdmin::isSubAdmin(OC_User::getUser())) {
+		$user = OC::$server->getUserSession()->getUser();
+		if (!OC::$server->getSubAdminManager()->isSubAdmin($user)) {
 			$l = OC_L10N::get('lib');
 			self::error(array( 'data' => array( 'message' => $l->t('Authentication error'), 'error' => 'authentication_error' )));
 			exit();

@@ -35,10 +35,16 @@ if (isset($_GET['filterGroups']) && !empty($_GET['filterGroups'])) {
 $groupPattern = $filterGroups ? $pattern : '';
 $groups = array();
 $adminGroups = array();
-$groupManager = \OC_Group::getManager();
-$isAdmin = OC_User::isAdminUser(OC_User::getUser());
 
-$groupsInfo = new \OC\Group\MetaData(OC_User::getUser(), $isAdmin, $groupManager);
+$activeUser = \OC::$server->getUserSession()->getUser();
+$userManager = \OC::$server->getUserManager();
+$userSession = \OC::$server->getUserSession();
+$groupManager = \OC::$server->getGroupManager();
+$subAdminManager = \OC::$server->getSubAdminManager();
+
+$isAdmin = $groupManager->get('admin')->inGroup($activeUser);
+
+$groupsInfo = new \OC\Group\MetaData($activeUser, $isAdmin, $groupManager, $subAdminManager);
 $groupsInfo->setSorting($groupsInfo::SORT_USERCOUNT);
 list($adminGroups, $groups) = $groupsInfo->get($groupPattern, $pattern);
 

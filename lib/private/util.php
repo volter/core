@@ -845,8 +845,8 @@ class OC_Util {
 	 * @return null|boolean $groups where the current user is subadmin
 	 */
 	public static function checkSubAdminUser() {
-		OC_Util::checkLoggedIn();
-		if (!OC_SubAdmin::isSubAdmin(OC_User::getUser())) {
+		$user = OC::$server->getUserSession()->getUser();
+		if (!OC::$server->getSubAdminManager()->isSubAdmin($user)) {
 			header('Location: ' . OC_Helper::linkToAbsolute('', 'index.php'));
 			exit();
 		}

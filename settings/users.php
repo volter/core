@@ -1,98 +1,118 @@
 <?php
 /**
- * Copyright (c) 2011, Robin Appelman <icewind1991@gmail.com>
+ * Copyright (c) 2014, Robin Appelman <icewind1991@gmail.com>
  * This file is licensed under the Affero General Public License version 3 or later.
  * See the COPYING-README file.
  */
 
-OC_Util::checkSubAdminUser();
+$users = array();
+$userManager = \OC::$server->getUserManager();
+$userSession = \OC::$server->getUserSession();
+$groupManager = \OC::$server->getGroupManager();
+$subAdminManager = \OC::$server->getSubAdminManager();
+$config = \OC::$server->getConfig();
+$user = $userSession->getUser();
+
+if (!$subAdminManager->isSubAdmin($user)) {
+	exit;
+}
 
 // We have some javascript foo!
 OC_Util::addScript('settings', 'users/deleteHandler');
 OC_Util::addScript('settings', 'users/filter');
-OC_Util::addScript( 'settings', 'users/users' );
-OC_Util::addScript( 'settings', 'users/groups' );
-OC_Util::addScript( 'core', 'multiselect' );
-OC_Util::addScript( 'core', 'singleselect' );
+OC_Util::addScript('settings', 'users/users');
+OC_Util::addScript('settings', 'users/groups');
+OC_Util::addScript('core', 'multiselect');
+OC_Util::addScript('core', 'singleselect');
 OC_Util::addScript('core', 'jquery.inview');
-OC_Util::addStyle( 'settings', 'settings' );
-OC_App::setActiveNavigationEntry( 'core_users' );
+OC_Util::addStyle('settings', 'settings');
+OC_App::setActiveNavigationEntry('core_users');
 
-$users = array();
-$userManager = \OC_User::getManager();
-$groupManager = \OC_Group::getManager();
 
-$isAdmin = OC_User::isAdminUser(OC_User::getUser());
+$isAdmin = $groupManager->get('admin')->inGroup($user);
 
-$groupsInfo = new \OC\Group\MetaData(OC_User::getUser(), $isAdmin, $groupManager);
+$groupsInfo = new \OC\Group\MetaData($user, $isAdmin, $groupManager, $subAdminManager);
 $groupsInfo->setSorting($groupsInfo::SORT_USERCOUNT);
+/**
+ * @var \OCP\IGroup[] $groups
+ */
 list($adminGroup, $groups) = $groupsInfo->get();
 
 $recoveryAdminEnabled = OC_App::isEnabled('files_encryption') &&
-					    OC_Appconfig::getValue( 'files_encryption', 'recoveryAdminEnabled' );
+	$config->getAppValue('files_encryption', 'recoveryAdminEnabled');
 
-if($isAdmin) {
-	$accessibleUsers = OC_User::getDisplayNames('', 30);
-	$subadmins = OC_SubAdmin::getAllSubAdmins();
-}else{
+if ($isAdmin) {
+	$accessibleUsers = $userManager->searchDisplayName('', 30);
+	$subAdmins = $subAdminManager->getAllSubAdmins();
+} else {
 	/* Retrieve group IDs from $groups array, so we can pass that information into OC_Group::displayNamesInGroups() */
-	$gids = array();
-	foreach($groups as $group) {
-		if (isset($group['id'])) {
-			$gids[] = $group['id'];
-		}
+	$accessibleUsers = array();
+	foreach ($groups as $group) {
+		$accessibleUsers = array_merge($accessibleUsers, $group->searchDisplayName('', 30));
 	}
-	$accessibleUsers = OC_Group::displayNamesInGroups($gids, '', 30);
-	$subadmins = false;
+	$subAdmins = false;
 }
 
 // load preset quotas
-$quotaPreset=OC_Appconfig::getValue('files', 'quota_preset', '1 GB, 5 GB, 10 GB');
-$quotaPreset=explode(',', $quotaPreset);
-foreach($quotaPreset as &$preset) {
-	$preset=trim($preset);
+$quotaPreset = $config->getAppValue('files', 'quota_preset', '1 GB, 5 GB, 10 GB');
+$quotaPreset = explode(',', $quotaPreset);
+foreach ($quotaPreset as &$preset) {
+	$preset = trim($preset);
 }
-$quotaPreset=array_diff($quotaPreset, array('default', 'none'));
+$quotaPreset = array_diff($quotaPreset, array('default', 'none'));
 
-$defaultQuota=OC_Appconfig::getValue('files', 'default_quota', 'none');
-$defaultQuotaIsUserDefined=array_search($defaultQuota, $quotaPreset)===false
-	&& array_search($defaultQuota, array('none', 'default'))===false;
+$defaultQuota = $config->getAppValue('files', 'default_quota', 'none');
+$defaultQuotaIsUserDefined = array_search($defaultQuota, $quotaPreset) === false
+	&& array_search($defaultQuota, array('none', 'default')) === false;
 
 // load users and quota
-foreach($accessibleUsers as $uid => $displayName) {
-	$quota=OC_Preferences::getValue($uid, 'files', 'quota', 'default');
-	$isQuotaUserDefined=array_search($quota, $quotaPreset)===false
-		&& array_search($quota, array('none', 'default'))===false;
+foreach ($accessibleUsers as $accessibleUser) {
+	$quota = $config->getUserValue($uid, 'files', 'quota', 'default');
+	$isQuotaUserDefined = array_search($quota, $quotaPreset) === false
+		&& array_search($quota, array('none', 'default')) === false;
 
-	$name = $displayName;
-	if ( $displayName !== $uid ) {
-		$name = $name . ' ('.$uid.')';
+	$name = $accessibleUser->getDisplayName();
+	if ($name !== $accessibleUser->getUID()) {
+		$name = $name . ' (' . $accessibleUser->getUID() . ')';
 	}
+
+	$groups = $groupManager->getUserGroups($accessibleUser);
+	$subAdminGroups = $subAdminManager->getSubAdminsGroups($accessibleUser);
+
+	$groupIds = array_map(function($group){
+		/** @var \OCP\IGroup $group */
+		return $group->getGID();
+	}, $groups);
+
+	$subAdminGroupIds = array_map(function($group){
+		/** @var \OCP\IGroup $group */
+		return $group->getGID();
+	}, $subAdminGroups);
 
 	$user = $userManager->get($uid);
 	$users[] = array(
 		"name" => $uid,
-		"displayName" => $displayName,
-		"groups" => OC_Group::getUserGroups($uid),
+		"displayName" => $accessibleUser->getDisplayName(),
+		"groups" => $groupIds,
 		'quota' => $quota,
 		'isQuotaUserDefined' => $isQuotaUserDefined,
-		'subadmin' => OC_SubAdmin::getSubAdminsGroups($uid),
-		'storageLocation' => $user->getHome(),
-		'lastLogin' => $user->getLastLogin(),
+		'subadmin' => $subAdminGroupIds,
+		'storageLocation' => $accessibleUser->getHome(),
+		'lastLogin' => $accessibleUser->getLastLogin(),
 	);
 }
 
-$tmpl = new OC_Template( "settings", "users/main", "user" );
-$tmpl->assign( 'users', $users );
-$tmpl->assign( 'groups', $groups );
-$tmpl->assign( 'adminGroup', $adminGroup );
-$tmpl->assign( 'isAdmin', (int) $isAdmin);
-$tmpl->assign( 'subadmins', $subadmins);
+$tmpl = new OC_Template("settings", "users/main", "user");
+$tmpl->assign('users', $users);
+$tmpl->assign('groups', $groups);
+$tmpl->assign('adminGroup', $adminGroup);
+$tmpl->assign('isAdmin', (int)$isAdmin);
+$tmpl->assign('subadmins', $subAdmins);
 $tmpl->assign('usercount', count($users));
-$tmpl->assign( 'numofgroups', count($groups) + count($adminGroup));
-$tmpl->assign( 'quota_preset', $quotaPreset);
-$tmpl->assign( 'default_quota', $defaultQuota);
-$tmpl->assign( 'defaultQuotaIsUserDefined', $defaultQuotaIsUserDefined);
-$tmpl->assign( 'recoveryAdminEnabled', $recoveryAdminEnabled);
-$tmpl->assign( 'enableAvatars', \OC_Config::getValue('enable_avatars', true));
+$tmpl->assign('numofgroups', count($groups) + count($adminGroup));
+$tmpl->assign('quota_preset', $quotaPreset);
+$tmpl->assign('default_quota', $defaultQuota);
+$tmpl->assign('defaultQuotaIsUserDefined', $defaultQuotaIsUserDefined);
+$tmpl->assign('recoveryAdminEnabled', $recoveryAdminEnabled);
+$tmpl->assign('enableAvatars', \OC_Config::getValue('enable_avatars', true));
 $tmpl->printPage();

@@ -377,8 +377,9 @@ class OC_App {
 			);
 		}
 
+		$user = \OC::$server->getUserSession()->getUser();
 		// if the user is logged-in
-		if (OC_User::isLoggedIn()) {
+		if ($user) {
 			// personal menu
 			$settings[] = array(
 				"id" => "personal",
@@ -401,7 +402,7 @@ class OC_App {
 			}
 
 			//SubAdmins are also allowed to access user management
-			if (OC_SubAdmin::isSubAdmin(OC_User::getUser())) {
+			if (OC::$server->getSubAdminManager()->isSubAdmin($user)) {
 				// admin users menu
 				$settings[] = array(
 					"id" => "core_users",

@@ -40,11 +40,9 @@ class Controller {
 		$password = isset($_POST['password']) ? $_POST['password'] : null;
 		$recoveryPassword = isset($_POST['recoveryPassword']) ? $_POST['recoveryPassword'] : null;
 
-		if (\OC_User::isAdminUser(\OC_User::getUser())) {
-			$userstatus = 'admin';
-		} elseif (\OC_SubAdmin::isUserAccessible(\OC_User::getUser(), $username)) {
-			$userstatus = 'subadmin';
-		} else {
+		$activeUser = \OC::$server->getUserSession()->getUser();
+
+		if (!\OC::$server->getSubAdminManager()->isSubAdmin($activeUser)) {
 			$l = new \OC_L10n('settings');
 			\OC_JSON::error(array('data' => array('message' => $l->t('Authentication error')) ));
 			exit();

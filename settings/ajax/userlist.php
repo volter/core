@@ -45,45 +45,78 @@ if (isset($_GET['pattern']) && !empty($_GET['pattern'])) {
 } else {
 	$pattern = '';
 }
+
+$activeUser = \OC::$server->getUserSession()->getUser();
+$userManager = \OC::$server->getUserManager();
+$groupManager = \OC::$server->getGroupManager();
+$subAdminManager = \OC::$server->getSubAdminManager();
+$config = \OC::$server->getConfig();
+
 $users = array();
-$userManager = \OC_User::getManager();
-if (OC_User::isAdminUser(OC_User::getUser())) {
-	if($gid !== false) {
-		$batch = OC_Group::displayNamesInGroup($gid, $pattern, $limit, $offset);
+if ($groupManager->get('admin')->inGroup($activeUser)) {
+	if ($gid !== false) {
+		$group = $groupManager->get($gid);
+		$batch = $group->searchDisplayName($pattern, $limit, $offset);
 	} else {
-		$batch = OC_User::getDisplayNames($pattern, $limit, $offset);
+		$batch = $userManager->search($pattern, $limit, $offset);
 	}
-	foreach ($batch as $uid => $displayname) {
-		$user = $userManager->get($uid);
+	foreach ($batch as $user) {
+		$groups = $groupManager->getUserGroups($user);
+		$groupIds = array_map(function ($group) {
+			/** @var \OCP\IGroup $group */
+			return $group->getGID();
+		}, $groups);
+
+		$subAdminGroups = $subAdminManager->getSubAdminsGroups($user);
+		$subAdminGroupIds = array_map(function ($group) {
+			/** @var \OCP\IGroup $group */
+			return $group->getGID();
+		}, $subAdminGroups);
+
 		$users[] = array(
-			'name' => $uid,
-			'displayname' => $displayname,
-			'groups' => OC_Group::getUserGroups($uid),
-			'subadmin' => OC_SubAdmin::getSubAdminsGroups($uid),
-			'quota' => OC_Preferences::getValue($uid, 'files', 'quota', 'default'),
+			'name' => $user->getUID(),
+			'displayname' => $user->getDisplayName(),
+			'groups' => $groupIds,
+			'subadmin' => $subAdminGroupIds,
+			'quota' => $config->getUserValue($user->getUID(), 'files', 'quota', 'default'),
 			'storageLocation' => $user->getHome(),
 			'lastLogin' => $user->getLastLogin(),
 		);
 	}
 } else {
-	$groups = OC_SubAdmin::getSubAdminsGroups(OC_User::getUser());
-	if($gid !== false && in_array($gid, $groups)) {
-		$groups = array($gid);
-	} elseif($gid !== false) {
-		//don't you try to investigate loops you must not know about
-		$groups = array();
+	$group = $groupManager->get($gid);
+	$subAdminGroups = $subAdminManager->getSubAdminsGroups($activeUser);
+	if ($gid) {
+		if (in_array($gid, $subAdminGroups)) {
+			$groups = array($group);
+		} else {
+			$groups = array();
+		}
+	} else {
+		$groups = $subAdminGroups;
 	}
-	$batch = OC_Group::usersInGroups($groups, $pattern, $limit, $offset);
-	foreach ($batch as $uid) {
-		$user = $userManager->get($uid);
 
-		// Only add the groups, this user is a subadmin of
-		$userGroups = array_intersect(OC_Group::getUserGroups($uid), OC_SubAdmin::getSubAdminsGroups(OC_User::getUser()));
+	/** @var \OC\User\User[] $batch */
+	$batch = array();
+	foreach ($groups as $group) {
+		$groupUsers = $group->searchUsers($pattern, $limit, $offset);
+		$batch = array_merge($batch, $groupUsers);
+	}
+	$batch = array_unique($batch);
+	foreach ($batch as $user) {
+		// Only add the groups, this user is a sub admin of
+		$userGroups = array_intersect($groupManager->getUserGroups($user), $subAdminGroups);
+		$groupIds = array_map(function ($group) {
+			/** @var \OCP\IGroup $group */
+			return $group->getGID();
+		}, $userGroups);
+
+
 		$users[] = array(
-			'name' => $uid,
+			'name' => $user->getUID(),
 			'displayname' => $user->getDisplayName(),
-			'groups' => $userGroups,
-			'quota' => OC_Preferences::getValue($uid, 'files', 'quota', 'default'),
+			'groups' => $groupIds,
+			'quota' => $config->getUserValue($user->getUID(), 'files', 'quota', 'default'),
 			'storageLocation' => $user->getHome(),
 			'lastLogin' => $user->getLastLogin(),
 		);

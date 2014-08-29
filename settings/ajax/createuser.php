@@ -3,26 +3,34 @@
 OCP\JSON::callCheck();
 OC_JSON::checkSubAdminUser();
 
-if(OC_User::isAdminUser(OC_User::getUser())) {
-	$groups = array();
-	if (!empty($_POST["groups"])) {
-		$groups = $_POST["groups"];
+$activeUser = \OC::$server->getUserSession()->getUser();
+$userManager = \OC::$server->getUserManager();
+$groupManager = \OC::$server->getGroupManager();
+$subAdminManager = \OC::$server->getSubAdminManager();
+$isAdmin = $groupManager->get('admin')->inGroup($activeUser);
+
+$targetGroups = array();
+if (!empty($_POST['groups'])) {
+	foreach ($_POST['groups'] as $group) {
+		$groupObject = $groupManager->get($group);
+		if (is_null($groupObject) and $isAdmin) {
+			$groupObject = $groupManager->createGroup($group);
+		}
+		$targetGroups[] = $groupObject;
 	}
-}else{
-	if (isset($_POST["groups"])) {
-		$groups = array();
-		if (!empty($_POST["groups"])) {
-			foreach ($_POST["groups"] as $group) {
-				if (OC_SubAdmin::isGroupAccessible(OC_User::getUser(), $group)) {
-					$groups[] = $group;
-				}
-			}
+}
+
+if ($isAdmin) {
+	$groups = $targetGroups;
+} else {
+	$groups = array();
+	foreach ($targetGroups as $targetGroup) {
+		if ($subAdminManager->isSubAdminOfGroup($activeUser, $targetGroup)) {
+			$groups[] = $targetGroup;
 		}
-		if (empty($groups)) {
-			$groups = OC_SubAdmin::getSubAdminsGroups(OC_User::getUser());
-		}
-	} else {
-		$groups = OC_SubAdmin::getSubAdminsGroups(OC_User::getUser());
+	}
+	if (count($groups) === 0) {
+		$groups = $subAdminManager->getSubAdminsGroups($activeUser);
 	}
 }
 $username = $_POST["username"];
@@ -34,26 +42,22 @@ try {
 	$userDirectory = OC_User::getHome($username) . '/files/';
 	$homeExists = file_exists($userDirectory);
 
-	if (!OC_User::createUser($username, $password)) {
-		OC_JSON::error(array('data' => array( 'message' => 'User creation failed for '.$username )));
+	$user = $userManager->createUser($username, $password);
+	if (!$user) {
+		OC_JSON::error(array('data' => array('message' => 'User creation failed for ' . $username)));
 		exit();
 	}
-	foreach( $groups as $i ) {
-		if(!OC_Group::groupExists($i)) {
-			OC_Group::createGroup($i);
-		}
-		OC_Group::addToGroup( $username, $i );
+	foreach ($groups as $group) {
+		$group->addUser($user);
 	}
 
-	$userManager = \OC_User::getManager();
-	$user = $userManager->get($username);
 	OCP\JSON::success(array("data" =>
-				array(
-					// returns whether the home already existed
-					"homeExists" => $homeExists,
-					"username" => $username,
-					"groups" => OC_Group::getUserGroups( $username ),
-					'storageLocation' => $user->getHome())));
+		array(
+			// returns whether the home already existed
+			"homeExists" => $homeExists,
+			"username" => $username,
+			"groups" => $groupManager->getUserGroupIds($user),
+			'storageLocation' => $user->getHome())));
 } catch (Exception $exception) {
-	OCP\JSON::error(array("data" => array( "message" => $exception->getMessage())));
+	OCP\JSON::error(array("data" => array("message" => $exception->getMessage())));
 }

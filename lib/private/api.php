@@ -240,13 +240,8 @@ class OC_API {
 				if(!$user) {
 					return false;
 				} else {
-					$subAdmin = OC_SubAdmin::isSubAdmin($user);
-					$admin = OC_User::isAdminUser($user);
-					if($subAdmin || $admin) {
-						return true;
-					} else {
-						return false;
-					}
+					$userObject = \OC::$server->getUserManager()->get($user);
+					return \OC::$server->getSubAdminManager()->isSubAdmin($userObject);
 				}
 				break;
 			case OC_API::ADMIN_AUTH:

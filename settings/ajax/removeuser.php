@@ -5,22 +5,29 @@ OCP\JSON::callCheck();
 
 $username = $_POST["username"];
 
+$activeUser = \OC::$server->getUserSession()->getUser();
+$userManager = \OC::$server->getUserManager();
+$groupManager = \OC::$server->getGroupManager();
+$subAdminManager = \OC::$server->getSubAdminManager();
+$user = $userManager->get($username);
+
 // A user shouldn't be able to delete his own account
-if(OC_User::getUser() === $username) {
+if ($user === $username) {
 	exit;
 }
 
-if(!OC_User::isAdminUser(OC_User::getUser()) && !OC_SubAdmin::isUserAccessible(OC_User::getUser(), $username)) {
+if (!$groupManager->get('admin')->inGroup($activeUser) &&
+	!$subAdminManager->isUserAccessible($activeUser, $user)
+) {
 	$l = OC_L10N::get('core');
-	OC_JSON::error(array( 'data' => array( 'message' => $l->t('Authentication error') )));
+	OC_JSON::error(array('data' => array('message' => $l->t('Authentication error'))));
 	exit();
 }
 
 // Return Success story
-if( OC_User::deleteUser( $username )) {
-	OC_JSON::success(array("data" => array( "username" => $username )));
-}
-else{
+if (OC_User::deleteUser($username)) {
+	OC_JSON::success(array("data" => array("username" => $username)));
+} else {
 	$l = OC_L10N::get('core');
-	OC_JSON::error(array("data" => array( "message" => $l->t("Unable to delete user") )));
+	OC_JSON::error(array("data" => array("message" => $l->t("Unable to delete user"))));
 }

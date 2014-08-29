@@ -73,11 +73,13 @@ class OC_OCS_Cloud {
 				'relative' => $storage['relative'],
 				);
 		}
-		if(OC_User::isAdminUser(OC_User::getUser()) 
-			|| OC_Subadmin::isUserAccessible(OC_User::getUser(), $parameters['userid'])) {
-			if(OC_User::userExists($parameters['userid'])) {
+		$user = OC::$server->getUserSession()->getUser();
+		$otherUser=OC::$server->getUserManager()->get($parameters['userid']);
+		if (OC::$server->getGroupManager()->get('admin')->inGroup($user)
+			|| OC::$server->getSubAdminManager()->isUserAccessible($user, $otherUser)) {
+			if ($otherUser) {
 				// Is an admin/subadmin so can see display name
-				$return['displayname'] = OC_User::getDisplayName($parameters['userid']);
+				$return['displayname'] = $otherUser->getDisplayName();
 			} else {
 				return new OC_OCS_Result(null, 101);
 			}

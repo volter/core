@@ -3,51 +3,49 @@
 OC_JSON::checkSubAdminUser();
 OCP\JSON::callCheck();
 
-$success = true;
-$username = $_POST["username"];
-$group = $_POST["group"];
+$activeUser = \OC::$server->getUserSession()->getUser();
+$userManager = \OC::$server->getUserManager();
+$groupManager = \OC::$server->getGroupManager();
+$subAdminManager = \OC::$server->getSubAdminManager();
+$user = $userManager->get($_POST['username']);
+$group = $groupManager->get($_POST['group']);
 
-if($username === OC_User::getUser() && $group === "admin" &&  OC_User::isAdminUser($username)) {
+if ($user === $activeUser && $group->getGID() === 'admin' &&
+	$group->inGroup($activeUser)
+) {
 	$l = OC_L10N::get('core');
-	OC_JSON::error(array( 'data' => array( 'message' => $l->t('Admins can\'t remove themself from the admin group'))));
+	OC_JSON::error(array('data' => array('message' => $l->t('Admins can\'t remove themself from the admin group'))));
 	exit();
 }
 
-if(!OC_User::isAdminUser(OC_User::getUser())
-	&& (!OC_SubAdmin::isUserAccessible(OC_User::getUser(), $username)
-		|| !OC_SubAdmin::isGroupAccessible(OC_User::getUser(), $group))) {
+if (!$groupManager->get('admin')->inGroup($activeUser)
+	&& (!$subAdminManager->isUserAccessible($activeUser, $user)
+		|| !$subAdminManager->isSubAdminOfGroup($activeUser, $group))
+) {
 	$l = OC_L10N::get('core');
-	OC_JSON::error(array( 'data' => array( 'message' => $l->t('Authentication error') )));
+	OC_JSON::error(array('data' => array('message' => $l->t('Authentication error'))));
 	exit();
 }
 
-if(!OC_Group::groupExists($group)) {
-	OC_Group::createGroup($group);
+if (is_null($group)) {
+	$group = $groupManager->createGroup($_POST['group']);
 }
 
 $l = OC_L10N::get('settings');
 
-$error = $l->t("Unable to add user to group %s", $group);
+$error = $l->t("Unable to add user to group %s", $group->getGID());
 $action = "add";
 
 // Toggle group
-if( OC_Group::inGroup( $username, $group )) {
+if ($group->inGroup($user)) {
 	$action = "remove";
-	$error = $l->t("Unable to remove user from group %s", $group);
-	$success = OC_Group::removeFromGroup( $username, $group );
-	$usersInGroup=OC_Group::usersInGroup($group);
-	if(count($usersInGroup) === 0) {
-		OC_Group::deleteGroup($group);
+	$error = $l->t("Unable to remove user from group %s", $group->getGID());
+	$group->removeUser($user);
+	if ($group->count() === 0) {
+		$group->delete();
 	}
-}
-else{
-	$success = OC_Group::addToGroup( $username, $group );
+} else {
+	$group->addUser($user);
 }
 
-// Return Success story
-if( $success ) {
-	OC_JSON::success(array("data" => array( "username" => $username, "action" => $action, "groupname" => $group )));
-}
-else{
-	OC_JSON::error(array("data" => array( "message" => $error )));
-}
+OC_JSON::success(array("data" => array("username" => $user->getUID(), "action" => $action, "groupname" => $group->getGID())));
