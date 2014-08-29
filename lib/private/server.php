@@ -95,6 +95,21 @@ class Server extends SimpleContainer implements IServerContainer {
 			$userManager = $c->query('UserManager');
 			return new \OC\Group\Manager($userManager);
 		});
+		$this->registerService('SubAdminManager', function ($c) {
+			/**
+			 * @var SimpleContainer $c
+			 * @var \OC\User\Manager $userManager
+			 * @var \OC\Group\Manager $groupManager
+			 * @var \OCP\IDB $db
+			 */
+			$userManager = $c->query('UserManager');
+			$groupManager = $c->query('GroupManager');
+			$db = $c->query('Db');
+			$subAdmin = new SubAdmin($db, $groupManager, $userManager);
+			$userManager->listen('\OC\User', 'postDelete', array($subAdmin, 'deleteUser'));
+			$userManager->listen('\OC\Group', 'postDelete', array($subAdmin, 'deleteGroup'));
+			return $subAdmin;
+		});
 		$this->registerService('UserSession', function ($c) {
 			/**
 			 * @var SimpleContainer $c
@@ -319,6 +334,15 @@ class Server extends SimpleContainer implements IServerContainer {
 	 */
 	function getGroupManager() {
 		return $this->query('GroupManager');
+	}
+
+	/**
+	 * Returns a sub admin manager
+	 *
+	 * @return \OCP\ISubAdmin
+	 */
+	function getSubAdminManager() {
+		return $this->query('SubAdminManager');
 	}
 
 	/**

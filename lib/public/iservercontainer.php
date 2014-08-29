@@ -107,6 +107,13 @@ interface IServerContainer {
 	function getGroupManager();
 
 	/**
+	 * Returns a sub admin manager
+	 *
+	 * @return \OCP\ISubAdmin
+	 */
+	function getSubAdminManager();
+
+	/**
 	 * Returns the user session
 	 *
 	 * @return \OCP\IUserSession
