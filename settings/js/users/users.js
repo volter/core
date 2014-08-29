@@ -616,7 +616,7 @@ $(document).ready(function () {
 					if ($(this).val().length > 0) {
 						$tr.find('.avatardiv').imageplaceholder(uid, displayName);
 						$.post(
-							OC.filePath('settings', 'ajax', 'changedisplayname.php'),
+							OC.generateUrl('settings/displayName'),
 							{username: uid, displayName: $(this).val()},
 							function (result) {
 								if (result && result.status==='success'){

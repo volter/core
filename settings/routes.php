@@ -8,6 +8,15 @@
 
 /** @var $this OCP\Route\IRouter */
 
+use OC\Settings\Application;
+
+$application = new Application();
+$application->registerRoutes($this, array('routes' => array(
+	array('name' => 'settings#changeDisplayName', 'url' => '/settings/displayName', 'verb' => 'POST'),
+)
+));
+
+// Post installa
 // Settings pages
 $this->create('settings_help', '/settings/help')
 	->actionInclude('settings/help.php');
@@ -44,8 +53,6 @@ $this->create('settings_ajax_removegroup', '/settings/ajax/removegroup.php')
 $this->create('settings_users_changepassword', '/settings/users/changepassword')
 	->post()
 	->action('OC\Settings\ChangePassword\Controller', 'changeUserPassword');
-$this->create('settings_ajax_changedisplayname', '/settings/ajax/changedisplayname.php')
-	->actionInclude('settings/ajax/changedisplayname.php');
 $this->create('settings_ajax_changegorupname', '/settings/ajax/changegroupname.php')
 	->actionInclude('settings/ajax/changegroupname.php');	
 // personal

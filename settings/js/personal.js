@@ -60,7 +60,7 @@ function changeDisplayName(){
         // Serialize the data
         var post = $( "#displaynameform" ).serialize();
         // Ajax foo
-        $.post( 'ajax/changedisplayname.php', post, function(data){
+        $.post(OC.generateUrl('settings/displayName'), post, function(data){
             if( data.status === "success" ){
                 $('#oldDisplayName').val($('#displayName').val());
                 // update displayName on the top right expand button
@@ -68,7 +68,7 @@ function changeDisplayName(){
                 updateAvatar();
             }
             else{
-                $('#newdisplayname').val(data.data.displayName);
+                $('#newdisplayname').val(data.displayName);
             }
             OC.msg.finishedSaving('#displaynameform .msg', data);
         });

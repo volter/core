@@ -16,7 +16,6 @@ use OC\Core\User\UserController;
 
 class Application extends App {
 
-
 	public function __construct(array $urlParams=array()){
 		parent::__construct('core', $urlParams);
 
@@ -25,7 +24,10 @@ class Application extends App {
 		/**
 		 * Controllers
 		 */
+
 		$container->registerService('LostController', function($c) {
+			/** @var $c \OCP\IContainer  */
+
 			return new LostController(
 				$c->query('AppName'),
 				$c->query('Request'),
@@ -40,6 +42,8 @@ class Application extends App {
 			);
 		});
 		$container->registerService('UserController', function($c) {
+			/** @var $c \OCP\IContainer  */
+
 			return new UserController(
 				$c->query('AppName'),
 				$c->query('Request'),
