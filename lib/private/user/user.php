@@ -70,7 +70,7 @@ class User implements IUser {
 		} else {
 			$this->enabled = true;
 		}
-		$this->lastLogin = \OC_Preferences::getValue($uid, 'login', 'lastLogin', 0);
+		$this->lastLogin = $this->config->getUserValue($uid, 'login', 'lastLogin', 0);
 	}
 
 	/**
@@ -129,8 +129,7 @@ class User implements IUser {
 	 */
 	public function updateLastLoginTimestamp() {
 		$this->lastLogin = time();
-		\OC_Preferences::setValue(
-			$this->uid, 'login', 'lastLogin', $this->lastLogin);
+		$this->config->setUserValue($this->uid, 'login', 'lastLogin', $this->lastLogin);
 	}
 
 	/**
