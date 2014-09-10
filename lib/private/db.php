@@ -109,10 +109,9 @@ class OC_DB {
 	 * The existing database connection is closed and connected again
 	 */
 	public static function reconnect() {
-		if(self::$connection) {
-			self::$connection->close();
-			self::$connection->connect();
-		}
+		$connection = \OC::$server->getDatabaseConnection();
+		$connection->close();
+		$connection->connect();
 	}
 
 	/**
@@ -145,7 +144,7 @@ class OC_DB {
 	 * SQL query via Doctrine prepare(), needs to be execute()'d!
 	 */
 	static public function prepare( $query , $limit = null, $offset = null, $isManipulation = null) {
-		self::connect();
+		$connection = \OC::$server->getDatabaseConnection();
 
 		if ($isManipulation === null) {
 			//try to guess, so we return the number of rows on manipulations
@@ -154,7 +153,7 @@ class OC_DB {
 
 		// return the result
 		try {
-			$result = self::$connection->prepare($query, $limit, $offset);
+			$result =$connection->prepare($query, $limit, $offset);
 		} catch (\Doctrine\DBAL\DBALException $e) {
 			throw new \DatabaseException($e->getMessage(), $query);
 		}
@@ -251,8 +250,7 @@ class OC_DB {
 	 * cause trouble!
 	 */
 	public static function insertid($table=null) {
-		self::connect();
-		return self::$connection->lastInsertId($table);
+		return \OC::$server->getDatabaseConnection()->lastInsertId($table);
 	}
 
 	/**
@@ -262,24 +260,21 @@ class OC_DB {
 	 * @return boolean number of updated rows
 	 */
 	public static function insertIfNotExist($table, $input) {
-		self::connect();
-		return self::$connection->insertIfNotExist($table, $input);
+		return \OC::$server->getDatabaseConnection()->insertIfNotExist($table, $input);
 	}
 
 	/**
 	 * Start a transaction
 	 */
 	public static function beginTransaction() {
-		self::connect();
-		self::$connection->beginTransaction();
+		return \OC::$server->getDatabaseConnection()->beginTransaction();
 	}
 
 	/**
 	 * Commit the database changes done during a transaction that is in progress
 	 */
 	public static function commit() {
-		self::connect();
-		self::$connection->commit();
+		return \OC::$server->getDatabaseConnection()->commit();
 	}
 
 	/**
@@ -411,18 +406,6 @@ class OC_DB {
 			return self::$connection->getError();
 		}
 		return '';
-	}
-
-	/**
-	 * @param bool $enabled
-	 */
-	static public function enableCaching($enabled) {
-		self::connect();
-		if ($enabled) {
-			self::$connection->enableQueryStatementCaching();
-		} else {
-			self::$connection->disableQueryStatementCaching();
-		}
 	}
 
 	/**
