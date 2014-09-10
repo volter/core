@@ -443,7 +443,6 @@ class Server extends SimpleContainer implements IServerContainer {
 	 */
 	function getDatabaseConnection() {
 		return $this->query('DatabaseConnection');
-		return \OC_DB::getConnection();
 	}
 
 	/**
