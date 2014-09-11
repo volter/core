@@ -37,9 +37,9 @@ try {
 	OC_App::loadApps(array('authentication'));
 	OC_App::loadApps(array('filesystem', 'logging'));
 
-	OC_Util::checkAppEnabled($app, true);
-	OC_App::loadApp($app);
 	OC_User::setIncognitoMode(true);
+	OC_Util::checkAppEnabled($app);
+	OC_App::loadApp($app);
 
 	$baseuri = OC::$WEBROOT . '/public.php/' . $service . '/';
 
