@@ -6,138 +6,33 @@
  */
 class OC_Util {
 	const USER_AGENT = 'ownCloud Server Crawler';
-	
+
 	public static $scripts = array();
 	public static $styles = array();
 	public static $headers = array();
 	private static $rootMounted = false;
 	private static $fsSetup = false;
 
-	private static function initLocalStorageRootFS() {
-		// mount local file backend as root
-		$configDataDirectory = OC_Config::getValue("datadirectory", OC::$SERVERROOT . "/data");
-		//first set up the local "root" storage
-		\OC\Files\Filesystem::initMounts();
-		if (!self::$rootMounted) {
-			\OC\Files\Filesystem::mount('\OC\Files\Storage\Local', array('datadir' => $configDataDirectory), '/');
-			self::$rootMounted = true;
-		}
-	}
-
-	/**
-	 * mounting an object storage as the root fs will in essence remove the
-	 * necessity of a data folder being present.
-	 * TODO make home storage aware of this and use the object storage instead of local disk access
-	 *
-	 * @param array $config containing 'class' and optional 'arguments'
-	 */
-	private static function initObjectStoreRootFS($config) {
-		// check misconfiguration
-		if (empty($config['class'])) {
-			\OCP\Util::writeLog('files', 'No class given for objectstore', \OCP\Util::ERROR);
-		}
-		if (!isset($config['arguments'])) {
-			$config['arguments'] = array();
-		}
-
-		// instantiate object store implementation
-		$config['arguments']['objectstore'] = new $config['class']($config['arguments']);
-		// mount with plain / root object store implementation
-		$config['class'] = '\OC\Files\ObjectStore\ObjectStoreStorage';
-
-		// mount object storage as root
-		\OC\Files\Filesystem::initMounts();
-		if (!self::$rootMounted) {
-			\OC\Files\Filesystem::mount($config['class'], $config['arguments'], '/');
-			self::$rootMounted = true;
-		}
-	}
-
 	/**
 	 * Can be set up
 	 *
-	 * @param string $user
+	 * @param string $userId
 	 * @return boolean
 	 * @description configure the initial filesystem based on the configuration
 	 */
-	public static function setupFS($user = '') {
-		//setting up the filesystem twice can only lead to trouble
-		if (self::$fsSetup) {
-			return false;
-		}
-
-		// If we are not forced to load a specific user we load the one that is logged in
-		if ($user == "" && OC_User::isLoggedIn()) {
-			$user = OC_User::getUser();
-		}
-
-		// load all filesystem apps before, so no setup-hook gets lost
-		OC_App::loadApps(array('filesystem'));
-
-		// the filesystem will finish when $user is not empty,
-		// mark fs setup here to avoid doing the setup from loading
-		// OC_Filesystem
-		if ($user != '') {
-			self::$fsSetup = true;
-		}
-
-		//check if we are using an object storage
-		$objectStore = OC_Config::getValue('objectstore');
-		if (isset($objectStore)) {
-			self::initObjectStoreRootFS($objectStore);
+	public static function setupFS($userId = '') {
+		/** @var \OC\Files\Node\Root $root */
+		$root = \OC::$server->getRootFolder();
+		if ($userId) {
+			$user = \OC::$server->getUserManager()->get($userId);
 		} else {
-			self::initLocalStorageRootFS();
+			$user = \OC::$server->getUserSession()->getUser();
 		}
-
-		if ($user != '' && !OCP\User::userExists($user)) {
-			return false;
+		if ($user) {
+			$factory = \OC::$server->getFilesystemFactory();
+			$factory->setupForUser($root, $user);
+			\OC\Files\Filesystem::$activeUser = $user;
 		}
-
-		//if we aren't logged in, there is no use to set up the filesystem
-		if ($user != "") {
-			\OC\Files\Filesystem::addStorageWrapper('oc_quota', function ($mountPoint, $storage) {
-				// set up quota for home storages, even for other users
-				// which can happen when using sharing
-
-				/**
-				 * @var \OC\Files\Storage\Storage $storage
-				 */
-				if ($storage->instanceOfStorage('\OC\Files\Storage\Home')
-					|| $storage->instanceOfStorage('\OC\Files\ObjectStore\HomeObjectStoreStorage')
-				) {
-					if (is_object($storage->getUser())) {
-						$user = $storage->getUser()->getUID();
-						$quota = OC_Util::getUserQuota($user);
-						if ($quota !== \OCP\Files\FileInfo::SPACE_UNLIMITED) {
-							return new \OC\Files\Storage\Wrapper\Quota(array('storage' => $storage, 'quota' => $quota, 'root' => 'files'));
-						}
-					}
-				}
-
-				return $storage;
-			});
-
-			// copy skeleton for local storage only
-			if (!isset($objectStore)) {
-				$userRoot = OC_User::getHome($user);
-				$userDirectory = $userRoot . '/files';
-				if (!is_dir($userDirectory)) {
-					mkdir($userDirectory, 0755, true);
-					OC_Util::copySkeleton($userDirectory);
-				}
-			}
-
-			$userDir = '/' . $user . '/files';
-
-			//jail the user into his "home" directory
-			\OC\Files\Filesystem::init($user, $userDir);
-
-			$fileOperationProxy = new OC_FileProxy_FileOperations();
-			OC_FileProxy::register($fileOperationProxy);
-
-			OC_Hook::emit('OC_Filesystem', 'setup', array('user' => $user, 'user_dir' => $userDir));
-		}
-		return true;
 	}
 
 	/**
@@ -202,22 +97,10 @@ class OC_Util {
 		if ($userQuota === 'default') {
 			$userQuota = $config->getAppValue('files', 'default_quota', 'none');
 		}
-		if($userQuota === 'none') {
+		if ($userQuota === 'none') {
 			return \OCP\Files\FileInfo::SPACE_UNLIMITED;
-		}else{
+		} else {
 			return OC_Helper::computerFileSize($userQuota);
-		}
-	}
-
-	/**
-	 * copies the user skeleton files into the fresh user home files
-	 *
-	 * @param string $userDirectory
-	 */
-	public static function copySkeleton($userDirectory) {
-		$skeletonDirectory = OC_Config::getValue('skeletondirectory', \OC::$SERVERROOT . '/core/skeleton');
-		if (!empty($skeletonDirectory)) {
-			OC_Util::copyr($skeletonDirectory, $userDirectory);
 		}
 	}
 
@@ -386,8 +269,8 @@ class OC_Util {
 	 * @return string timestamp
 	 * @description adjust to clients timezone if we know it
 	 */
-	public static function formatDate( $timestamp, $dateOnly = false) {
-		if(\OC::$server->getSession()->exists('timezone')) {
+	public static function formatDate($timestamp, $dateOnly = false) {
+		if (\OC::$server->getSession()->exists('timezone')) {
 			$systemTimeZone = intval(date('O'));
 			$systemTimeZone = (round($systemTimeZone / 100, 0) * 60) + ($systemTimeZone % 100);
 			$clientTimeZone = \OC::$server->getSession()->get('timezone') * 60;
@@ -442,8 +325,8 @@ class OC_Util {
 			$errors[] = array(
 				'error' => $l->t('Cannot write into "config" directory'),
 				'hint' => $l->t('This can usually be fixed by '
-					. '%sgiving the webserver write access to the config directory%s.',
-					array('<a href="' . \OC_Helper::linkToDocs('admin-dir_permissions') . '" target="_blank">', '</a>'))
+						. '%sgiving the webserver write access to the config directory%s.',
+						array('<a href="' . \OC_Helper::linkToDocs('admin-dir_permissions') . '" target="_blank">', '</a>'))
 			);
 		}
 
@@ -456,9 +339,9 @@ class OC_Util {
 				$errors[] = array(
 					'error' => $l->t('Cannot write into "apps" directory'),
 					'hint' => $l->t('This can usually be fixed by '
-						. '%sgiving the webserver write access to the apps directory%s'
-						. ' or disabling the appstore in the config file.',
-						array('<a href="' . \OC_Helper::linkToDocs('admin-dir_permissions') . '" target="_blank">', '</a>'))
+							. '%sgiving the webserver write access to the apps directory%s'
+							. ' or disabling the appstore in the config file.',
+							array('<a href="' . \OC_Helper::linkToDocs('admin-dir_permissions') . '" target="_blank">', '</a>'))
 				);
 			}
 		}
@@ -471,8 +354,8 @@ class OC_Util {
 				$errors[] = array(
 					'error' => $l->t('Cannot create "data" directory (%s)', array($CONFIG_DATADIRECTORY)),
 					'hint' => $l->t('This can usually be fixed by '
-						. '<a href="%s" target="_blank">giving the webserver write access to the root directory</a>.',
-						array(OC_Helper::linkToDocs('admin-dir_permissions')))
+							. '<a href="%s" target="_blank">giving the webserver write access to the root directory</a>.',
+							array(OC_Helper::linkToDocs('admin-dir_permissions')))
 				);
 			}
 		} else if (!is_writable($CONFIG_DATADIRECTORY) or !is_readable($CONFIG_DATADIRECTORY)) {
@@ -487,7 +370,7 @@ class OC_Util {
 		if (!OC_Util::isSetLocaleWorking()) {
 			$errors[] = array(
 				'error' => $l->t('Setting locale to %s failed',
-					array('en_US.UTF-8/fr_FR.UTF-8/es_ES.UTF-8/de_DE.UTF-8/ru_RU.UTF-8/'
+						array('en_US.UTF-8/fr_FR.UTF-8/es_ES.UTF-8/de_DE.UTF-8/ru_RU.UTF-8/'
 						. 'pt_BR.UTF-8/it_IT.UTF-8/ja_JP.UTF-8/zh_CN.UTF-8')),
 				'hint' => $l->t('Please install one of these locales on your system and restart your webserver.')
 			);
@@ -548,7 +431,7 @@ class OC_Util {
 			$errors[] = array(
 				'error' => $l->t('PHP %s or higher is required.', '5.3.3'),
 				'hint' => $l->t('Please ask your server administrator to update PHP to the latest version.'
-					. ' Your PHP version is no longer supported by ownCloud and the PHP community.')
+						. ' Your PHP version is no longer supported by ownCloud and the PHP community.')
 			);
 			$webServerRestart = true;
 		}
@@ -560,7 +443,7 @@ class OC_Util {
 			$errors[] = array(
 				'error' => $l->t('PHP Safe Mode is enabled. ownCloud requires that it is disabled to work properly.'),
 				'hint' => $l->t('PHP Safe Mode is a deprecated and mostly useless setting that should be disabled. '
-					. 'Please ask your server administrator to disable it in php.ini or in your webserver config.')
+						. 'Please ask your server administrator to disable it in php.ini or in your webserver config.')
 			);
 			$webServerRestart = true;
 		}
@@ -568,7 +451,7 @@ class OC_Util {
 			$errors[] = array(
 				'error' => $l->t('Magic Quotes is enabled. ownCloud requires that it is disabled to work properly.'),
 				'hint' => $l->t('Magic Quotes is a deprecated and mostly useless setting that should be disabled. '
-					. 'Please ask your server administrator to disable it in php.ini or in your webserver config.')
+						. 'Please ask your server administrator to disable it in php.ini or in your webserver config.')
 			);
 			$webServerRestart = true;
 		}
@@ -622,7 +505,7 @@ class OC_Util {
 				$errors[] = array(
 					'error' => $l->t('Error occurred while checking PostgreSQL version'),
 					'hint' => $l->t('Please make sure you have PostgreSQL >= 9 or'
-						. ' check the logs for more information about the error')
+							. ' check the logs for more information about the error')
 				);
 			}
 		}
@@ -718,7 +601,7 @@ class OC_Util {
 			$errors[] = array(
 				'error' => $l->t('Data directory (%s) is invalid', array($dataDirectory)),
 				'hint' => $l->t('Please check that the data directory contains a file' .
-					' ".ocdata" in its root.')
+						' ".ocdata" in its root.')
 			);
 		}
 		return $errors;
@@ -1001,7 +884,7 @@ class OC_Util {
 		// creating a test file
 		$testFile = OC::$server->getConfig()->getSystemValue('datadirectory', OC::$SERVERROOT . '/data') . '/' . $fileName;
 
-		if (file_exists($testFile)) {// already running this test, possible recursive call
+		if (file_exists($testFile)) { // already running this test, possible recursive call
 			return false;
 		}
 
@@ -1185,7 +1068,7 @@ class OC_Util {
 	 * @deprecated Use \OC::$server->getSecureRandom()->getMediumStrengthGenerator()->generate($length); instead
 	 */
 	public static function generateRandomBytes($length = 30) {
-		return \OC::$server->getSecureRandom()->getMediumStrengthGenerator()->generate($length, \OCP\Security\ISecureRandom::CHAR_LOWER.\OCP\Security\ISecureRandom::CHAR_DIGITS);
+		return \OC::$server->getSecureRandom()->getMediumStrengthGenerator()->generate($length, \OCP\Security\ISecureRandom::CHAR_LOWER . \OCP\Security\ISecureRandom::CHAR_DIGITS);
 	}
 
 	/**
