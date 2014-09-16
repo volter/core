@@ -54,8 +54,7 @@ class OC_DB {
 	 *
 	 * @return \OC\DB\MDB2SchemaManager
 	 */
-	private static function getMDB2SchemaManager()
-	{
+	private static function getMDB2SchemaManager() {
 		return new \OC\DB\MDB2SchemaManager(\OC::$server->getDatabaseConnection());
 	}
 
@@ -80,7 +79,7 @@ class OC_DB {
 
 		// return the result
 		try {
-			$result =$connection->prepare($query, $limit, $offset);
+			$result = $connection->prepare($query, $limit, $offset);
 		} catch (\Doctrine\DBAL\DBALException $e) {
 			throw new \DatabaseException($e->getMessage(), $query);
 		}
@@ -181,7 +180,7 @@ class OC_DB {
 	}
 
 	/**
-	 * Insert a row if a matching row doesn't exists.
+	 * Insert a row if a matching row does not exists.
 	 * @param string $table The table to insert into in the form '*PREFIX*tableName'
 	 * @param array $input An array of fieldname/value pairs
 	 * @return boolean number of updated rows
@@ -270,7 +269,7 @@ class OC_DB {
 	 */
 	public static function dropTable($tableName) {
 		$connection = \OC::$server->getDatabaseConnection();
-		$tableName = OC_Config::getValue('dbtableprefix', 'oc_' ) . trim($tableName);
+		$tableName = \OC::$server->getConfig()->getSystemValue('dbtableprefix', 'oc_' ) . trim($tableName);
 
 		$connection->beginTransaction();
 
@@ -342,9 +341,9 @@ class OC_DB {
 	 */
 	public static function tableExists($table) {
 
-		$table = OC_Config::getValue('dbtableprefix', 'oc_' ) . trim($table);
+		$table = \OC::$server->getConfig()->getSystemValue('dbtableprefix', 'oc_' ) . trim($table);
 
-		$dbType = OC_Config::getValue( 'dbtype', 'sqlite' );
+		$dbType = \OC::$server->getConfig()->getSystemValue( 'dbtype', 'sqlite' );
 		switch ($dbType) {
 			case 'sqlite':
 			case 'sqlite3':

@@ -14,6 +14,7 @@ use Doctrine\Common\EventManager;
 use OCP\IDBConnection;
 
 class Connection extends \Doctrine\DBAL\Connection implements IDBConnection {
+
 	/**
 	 * @var string $tablePrefix
 	 */
@@ -62,13 +63,11 @@ class Connection extends \Doctrine\DBAL\Connection implements IDBConnection {
 		if (!is_null($limit)) {
 			$platform = $this->getDatabasePlatform();
 			$statement = $platform->modifyLimitQuery($statement, $limit, $offset);
-		} else {
-			$origStatement = $statement;
 		}
 		$statement = $this->replaceTablePrefix($statement);
 		$statement = $this->adapter->fixupStatement($statement);
 
-		if(\OC_Config::getValue( 'log_query', false)) {
+		if(\OC::$server->getConfig()->getSystemValue( 'log_query', false)) {
 			\OC_Log::write('core', 'DB prepare : '.$statement, \OC_Log::DEBUG);
 		}
 		return parent::prepare($statement);
@@ -87,8 +86,7 @@ class Connection extends \Doctrine\DBAL\Connection implements IDBConnection {
 	 * @return \Doctrine\DBAL\Driver\Statement The executed statement.
 	 * @internal PERF: Directly prepares a driver statement, not a wrapper.
 	 */
-	public function executeQuery($query, array $params = array(), $types = array(), QueryCacheProfile $qcp = null)
-	{
+	public function executeQuery($query, array $params = array(), $types = array(), QueryCacheProfile $qcp = null) {
 		$query = $this->replaceTablePrefix($query);
 		$query = $this->adapter->fixupStatement($query);
 		return parent::executeQuery($query, $params, $types, $qcp);
@@ -106,8 +104,7 @@ class Connection extends \Doctrine\DBAL\Connection implements IDBConnection {
 	 * @return integer The number of affected rows.
 	 * @internal PERF: Directly prepares a driver statement, not a wrapper.
 	 */
-	public function executeUpdate($query, array $params = array(), array $types = array())
-	{
+	public function executeUpdate($query, array $params = array(), array $types = array()) {
 		$query = $this->replaceTablePrefix($query);
 		$query = $this->adapter->fixupStatement($query);
 		return parent::executeUpdate($query, $params, $types);
@@ -124,8 +121,7 @@ class Connection extends \Doctrine\DBAL\Connection implements IDBConnection {
 	 * @param string $seqName Name of the sequence object from which the ID should be returned.
 	 * @return string A string representation of the last inserted ID.
 	 */
-	public function lastInsertId($seqName = null)
-	{
+	public function lastInsertId($seqName = null) {
 		if ($seqName) {
 			$seqName = $this->replaceTablePrefix($seqName);
 		}
@@ -133,13 +129,12 @@ class Connection extends \Doctrine\DBAL\Connection implements IDBConnection {
 	}
 
 	// internal use
-	public function realLastInsertId($seqName = null)
-	{
+	public function realLastInsertId($seqName = null) {
 		return parent::lastInsertId($seqName);
 	}
 
 	/**
-	 * Insert a row if a matching row doesn't exists.
+	 * Insert a row if a matching row does not exists.
 	 * @param string $table. The table to insert into in the form '*PREFIX*tableName'
 	 * @param array $input. An array of fieldname/value pairs
 	 * @return bool The return value from execute()
