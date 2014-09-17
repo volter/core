@@ -126,7 +126,7 @@ class App {
 	 * Check if the app is enabled, redirects to home if not
 	 *
 	 * @param string $app
-	 * @param bool $all
+	 * @param bool $all whether to check if the logged in user has access to the app or just check if the app is installed
 	 * @return void
 	*/
 	public static function checkAppEnabled( $app, $all = false ) {
