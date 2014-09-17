@@ -552,11 +552,7 @@ class OC_Util {
 			);
 			$webServerRestart = true;
 		}
-		if (((strtolower(@ini_get('safe_mode')) == 'on')
-			|| (strtolower(@ini_get('safe_mode')) == 'yes')
-			|| (strtolower(@ini_get('safe_mode')) == 'true')
-			|| (ini_get("safe_mode") == 1))
-		) {
+		if (OC::$server->getIniWrapper()->getBool('safe_mode')) {
 			$errors[] = array(
 				'error' => $l->t('PHP Safe Mode is enabled. ownCloud requires that it is disabled to work properly.'),
 				'hint' => $l->t('PHP Safe Mode is a deprecated and mostly useless setting that should be disabled. '
@@ -1229,7 +1225,7 @@ class OC_Util {
 				curl_setopt($curl, CURLOPT_PROXYUSERPWD, OC_Config::getValue('proxyuserpwd'));
 			}
 
-			if (ini_get('open_basedir') === '' && ini_get('safe_mode') === 'Off') {
+			if (OC::$server->getIniWrapper()->getString('open_basedir') === '' && !OC::$server->getIniWrapper()->getBool('safe_mode')) {
 				curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
 				curl_setopt($curl, CURLOPT_MAXREDIRS, $max_redirects);
 				$data = curl_exec($curl);
@@ -1355,7 +1351,7 @@ class OC_Util {
 		}
 		// XCache
 		if (function_exists('xcache_clear_cache')) {
-			if (ini_get('xcache.admin.enable_auth')) {
+			if (OC::$server->getIniWrapper()->getBool('xcache.admin.enable_auth')) {
 				OC_Log::write('core', 'XCache opcode cache will not be cleared because "xcache.admin.enable_auth" is enabled.', \OC_Log::WARN);
 			} else {
 				xcache_clear_cache(XC_TYPE_PHP, 0);
@@ -1464,6 +1460,6 @@ class OC_Util {
 	 * @return string
 	 */
 	public static function isPhpCharSetUtf8() {
-		return ini_get('default_charset') === 'UTF-8';
+		return OC::$server->getIniWrapper()->getString('default_charset') === 'UTF-8';
 	}
 }

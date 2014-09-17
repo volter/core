@@ -486,7 +486,6 @@ class OC {
 
 		self::handleAuthHeaders();
 		self::initPaths();
-		self::registerAutoloaderCache();
 
 		OC_Util::isSetLocaleWorking();
 
@@ -518,6 +517,8 @@ class OC {
 
 		// setup the basic server
 		self::$server = new \OC\Server();
+
+		self::registerAutoloaderCache();
 
 		self::initTemplateEngine();
 		OC_App::loadApps(array('session'));
@@ -989,7 +990,7 @@ if (!function_exists('get_temp_dir')) {
 	 * @return null|string Path to the temporary directory or null
 	 */
 	function get_temp_dir() {
-		if ($temp = ini_get('upload_tmp_dir')) return $temp;
+		if ($temp = OC::$server->getIniWrapper()->getString('upload_tmp_dir')) return $temp;
 		if ($temp = getenv('TMP')) return $temp;
 		if ($temp = getenv('TEMP')) return $temp;
 		if ($temp = getenv('TMPDIR')) return $temp;

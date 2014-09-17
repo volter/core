@@ -2,6 +2,7 @@
 
 namespace OC;
 
+use bantu\IniGetWrapper\IniGetWrapper;
 use OC\AppFramework\Http\Request;
 use OC\AppFramework\Db\Db;
 use OC\AppFramework\Utility\SimpleContainer;
@@ -211,6 +212,9 @@ class Server extends SimpleContainer implements IServerContainer {
 		});
 		$this->registerService('Db', function ($c) {
 			return new Db();
+		});
+		$this->registerService('IniWrapper', function ($c) {
+			return new IniGetWrapper();
 		});
 	}
 
@@ -500,6 +504,13 @@ class Server extends SimpleContainer implements IServerContainer {
 	 */
 	function getDb() {
 		return $this->query('Db');
+	}
+
+	/**
+	 * @return IniGetWrapper
+	 */
+	public function getIniWrapper() {
+		return $this->query('IniWrapper');
 	}
 
 	/**
