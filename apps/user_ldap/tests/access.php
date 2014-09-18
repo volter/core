@@ -91,8 +91,7 @@ class Test_Access extends \PHPUnit_Framework_TestCase {
 		$this->assertSame($sidExpected, $access->convertSID2Str($sidBinary));
 	}
 
-	public function convertSID2StrSuccessData()
-	{
+	public function convertSID2StrSuccessData() {
 		return array(
 			array(
 				array(
@@ -105,6 +104,16 @@ class Test_Access extends \PHPUnit_Framework_TestCase {
 					"\xca\x32\x05\x5f",
 				),
 				'S-1-5-21-249921958-728525901-1594176202',
+			),
+			array(
+				array(
+					"\x01",
+					"\x02",
+					"\xFF\xFF\xFF\xFF\xFF\xFF",
+					"\xFF\xFF\xFF\xFF",
+					"\xFF\xFF\xFF\xFF",
+				),
+				'S-1-281474976710655-4294967295-4294967295',
 			),
 		);
 	}
