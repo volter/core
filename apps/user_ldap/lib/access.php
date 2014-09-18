@@ -1333,7 +1333,7 @@ class Access extends LDAPUtility implements user\IUserTools {
 		$subIDs = array();
 		for ($i = 0; $i < $numberSubID; $i++) {
 			$subID = unpack('V', substr($sid, $subIdStart + $subIdLength * $i, $subIdLength));
-			$subIDs[] = $subID[1];
+			$subIDs[] = sprintf('%u', $subID[1]);
 		}
 
 		// Result for example above: S-1-5-21-249921958-728525901-1594176202
