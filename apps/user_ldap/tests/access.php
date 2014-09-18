@@ -78,7 +78,8 @@ class Test_Access extends \PHPUnit_Framework_TestCase {
 		$this->assertTrue($expected === $access->escapeFilterPart($input));
 	}
 
-	public function testConvertSID2StrSuccess() {
+	/** @dataProvider convertSID2StrSuccessData */
+	public function testConvertSID2StrSuccess(array $sidArray, $sidExpected) {
 		list($lw, $con, $um) = $this->getConnecterAndLdapMock();
 		$access = new Access($con, $lw, $um);
 
@@ -86,18 +87,26 @@ class Test_Access extends \PHPUnit_Framework_TestCase {
 			$this->markTestSkipped('bcmath not available');
 		}
 
-		$sidBinary = implode('', array(
-			"\x01",
-			"\x04",
-			"\x00\x00\x00\x00\x00\x05",
-			"\x15\x00\x00\x00",
-			"\xa6\x81\xe5\x0e",
-			"\x4d\x6c\x6c\x2b",
-			"\xca\x32\x05\x5f",
-		));
-		$sidExpected = 'S-1-5-21-249921958-728525901-1594176202';
-
+		$sidBinary = implode('', $sidArray);
 		$this->assertSame($sidExpected, $access->convertSID2Str($sidBinary));
+	}
+
+	public function convertSID2StrSuccessData()
+	{
+		return array(
+			array(
+				array(
+					"\x01",
+					"\x04",
+					"\x00\x00\x00\x00\x00\x05",
+					"\x15\x00\x00\x00",
+					"\xa6\x81\xe5\x0e",
+					"\x4d\x6c\x6c\x2b",
+					"\xca\x32\x05\x5f",
+				),
+				'S-1-5-21-249921958-728525901-1594176202',
+			),
+		);
 	}
 
 	public function testConvertSID2StrInputError() {
