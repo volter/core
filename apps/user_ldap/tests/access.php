@@ -83,10 +83,6 @@ class Test_Access extends \PHPUnit_Framework_TestCase {
 		list($lw, $con, $um) = $this->getConnecterAndLdapMock();
 		$access = new Access($con, $lw, $um);
 
-		if(!function_exists('\bcadd')) {
-			$this->markTestSkipped('bcmath not available');
-		}
-
 		$sidBinary = implode('', $sidArray);
 		$this->assertSame($sidExpected, $access->convertSID2Str($sidBinary));
 	}
@@ -121,10 +117,6 @@ class Test_Access extends \PHPUnit_Framework_TestCase {
 	public function testConvertSID2StrInputError() {
 		list($lw, $con, $um) = $this->getConnecterAndLdapMock();
 		$access = new Access($con, $lw, $um);
-
-		if(!function_exists('\bcadd')) {
-			$this->markTestSkipped('bcmath not available');
-		}
 
 		$sidIllegal = 'foobar';
 		$sidExpected = '';
