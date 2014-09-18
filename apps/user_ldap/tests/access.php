@@ -106,27 +106,6 @@ class Test_Access extends \PHPUnit_Framework_TestCase {
 		$this->assertSame($sidExpected, $access->convertSID2Str($sidIllegal));
 	}
 
-	public function testConvertSID2StrNoBCMath() {
-		if(function_exists('\bcadd')) {
-			$removed = false;
-			if(function_exists('runkit_function_remove')) {
-				$removed = !runkit_function_remove('\bcadd');
-			}
-			if(!$removed) {
-				$this->markTestSkipped('bcadd could not be removed for ' .
-					'testing without bcmath');
-			}
-		}
-
-		list($lw, $con, $um) = $this->getConnecterAndLdapMock();
-		$access = new Access($con, $lw, $um);
-
-		$sidBinary = file_get_contents(__DIR__ . '/data/sid.dat');
-		$sidExpected = '';
-
-		$this->assertSame($sidExpected, $access->convertSID2Str($sidBinary));
-	}
-
 	public function testGetDomainDNFromDNSuccess() {
 		list($lw, $con, $um) = $this->getConnecterAndLdapMock();
 		$access = new Access($con, $lw, $um);
