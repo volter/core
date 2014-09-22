@@ -76,6 +76,7 @@ $tmpl->assign('allowLinks', OC_Appconfig::getValue('core', 'shareapi_allow_links
 $tmpl->assign('enforceLinkPassword', \OCP\Util::isPublicLinkPasswordRequired());
 $tmpl->assign('allowPublicUpload', OC_Appconfig::getValue('core', 'shareapi_allow_public_upload', 'yes'));
 $tmpl->assign('allowResharing', OC_Appconfig::getValue('core', 'shareapi_allow_resharing', 'yes'));
+$tmpl->assign('allowPublicMailNotification', OC_Appconfig::getValue('core', 'shareapi_allow_public_notification', 'no'));
 $tmpl->assign('allowMailNotification', OC_Appconfig::getValue('core', 'shareapi_allow_mail_notification', 'no'));
 $tmpl->assign('onlyShareWithGroupMembers', \OC\Share\Share::shareWithGroupMembersOnly());
 $tmpl->assign('forms', array());
