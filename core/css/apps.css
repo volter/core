@@ -484,10 +484,12 @@ button.loading {
 }
 .section h2 {
 	font-size: 20px;
+	font-weight: normal;
 	margin-bottom: 7px;
 }
 .section h3 {
 	font-size: 16px;
+	font-weight: normal;
 }
 /* slight position correction of checkboxes and radio buttons */
 .section input[type="checkbox"],
