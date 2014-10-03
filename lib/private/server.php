@@ -6,16 +6,16 @@ use OC\AppFramework\Http\Request;
 use OC\AppFramework\Db\Db;
 use OC\AppFramework\Utility\SimpleContainer;
 use OC\Cache\UserCache;
-use OC\Debug\DummyQueryLogger;
-use OC\Debug\EventLogger;
-use OC\Debug\QueryLogger;
+use OC\Diagnostics\DummyQueryLogger;
+use OC\Diagnostics\EventLogger;
+use OC\Diagnostics\QueryLogger;
 use OC\Security\CertificateManager;
 use OC\DB\ConnectionWrapper;
 use OC\Files\Node\Root;
 use OC\Files\View;
 use OC\Security\Crypto;
 use OC\Security\SecureRandom;
-use OC\Debug\DummyEventLogger;
+use OC\Diagnostics\DummyEventLogger;
 use OCP\IServerContainer;
 use OCP\ISession;
 
@@ -563,7 +563,7 @@ class Server extends SimpleContainer implements IServerContainer {
 	 *
 	 * The returned logger only logs data when debug mode is enabled
 	 *
-	 * @return \OCP\Debug\IEventLogger
+	 * @return \OCP\Diagnostics\IEventLogger
 	 */
 	function getEventLogger() {
 		return $this->query('EventLogger');
@@ -574,9 +574,9 @@ class Server extends SimpleContainer implements IServerContainer {
 	 *
 	 * The returned logger only logs data when debug mode is enabled
 	 *
-	 * @return \OCP\Debug\IQueryLogger
+	 * @return \OCP\Diagnostics\IQueryLogger
 	 */
 	function getQueryLogger() {
-		return $this->query('EventLogger');
+		return $this->query('QueryLogger');
 	}
 }
