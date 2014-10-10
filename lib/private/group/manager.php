@@ -191,7 +191,6 @@ class Manager extends PublicEmitter implements IGroupManager {
 		$groupIds = array();
 		foreach ($this->backends as $backend) {
 			$groupIds = array_merge($groupIds, $backend->getUserGroups($user->getUID()));
-			
 		}
 		return $groupIds;
 	}
@@ -230,7 +229,7 @@ class Manager extends PublicEmitter implements IGroupManager {
 					}
 				}
 				$searchOffset += $searchLimit;
-			} while(count($groupUsers) < $searchLimit+$offset && count($filteredUsers) === $searchLimit);
+			} while(count($groupUsers) < $searchLimit+$offset && count($filteredUsers) >= $searchLimit);
 
 			if($limit === -1) {
 				$groupUsers = array_slice($groupUsers, $offset);
