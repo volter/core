@@ -903,6 +903,7 @@ class View {
 				$scanner->scan($internalPath, Cache\Scanner::SCAN_SHALLOW);
 				$data = $cache->get($internalPath);
 			} else if ($watcher->checkUpdate($internalPath, $data)) {
+				$this->updater->propagate($path);
 				$data = $cache->get($internalPath);
 			}
 
@@ -969,7 +970,9 @@ class View {
 				$scanner->scan($internalPath, Cache\Scanner::SCAN_SHALLOW);
 			} else {
 				$watcher = $storage->getWatcher($internalPath);
-				$watcher->checkUpdate($internalPath);
+				if ($watcher->checkUpdate($internalPath)) {
+					$this->updater->propagate($path);
+				}
 			}
 
 			$folderId = $cache->getId($internalPath);
