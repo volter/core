@@ -966,9 +966,9 @@ class View {
 
 			$data = $cache->get($internalPath);
 			$watcher = $storage->getWatcher($internalPath);
-			if (!$data) {
+			if (!$data or $data['size'] === -1) {
 				if (!$storage->file_exists($internalPath)) {
-					return false;
+					return array();
 				}
 				$scanner = $storage->getScanner($internalPath);
 				$scanner->scan($internalPath, Cache\Scanner::SCAN_SHALLOW);
