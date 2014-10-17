@@ -32,9 +32,12 @@ class OC_TemplateLayout extends OC_Template {
 			}
 
 			// Update notification
-			if(OC_Config::getValue('updatechecker', true) === true) {
-				$data=OC_Updater::check();
-				if(isset($data['version']) && $data['version'] != '' and $data['version'] !== Array() && OC_User::isAdminUser(OC_User::getUser())) {
+			if(OC_Config::getValue('updatechecker', true) === true &&
+				OC_User::isAdminUser(OC_User::getUser())) {
+				$updater = new \OC\Updater();
+				$data = $updater->check('http://apps.owncloud.com/updater.php');
+				if(isset($data['version']) && $data['version'] != '' and $data['version'] !== Array() &&
+					OC_User::isAdminUser(OC_User::getUser())) {
 					$this->assign('updateAvailable', true);
 					$this->assign('updateVersion', $data['versionstring']);
 					$this->assign('updateLink', $data['web']);
